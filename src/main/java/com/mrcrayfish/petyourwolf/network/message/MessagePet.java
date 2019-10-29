@@ -1,6 +1,7 @@
 package com.mrcrayfish.petyourwolf.network.message;
 
 import com.mrcrayfish.petyourwolf.common.CustomDataParameters;
+import com.mrcrayfish.petyourwolf.common.PettingTracker;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.network.NetworkEvent;
@@ -42,6 +43,14 @@ public class MessagePet implements IMessage<MessagePet>
             if(entity != null)
             {
                 entity.getDataManager().set(CustomDataParameters.PETTING, message.pet);
+                if(message.pet)
+                {
+                    PettingTracker.startPetting(entity);
+                }
+                else
+                {
+                    PettingTracker.stopPetting(entity);
+                }
             }
         });
         supplier.get().setPacketHandled(true);
