@@ -2,7 +2,6 @@ package com.mrcrayfish.petyourwolf.client;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mrcrayfish.obfuscate.client.event.PlayerModelEvent;
-import com.mrcrayfish.obfuscate.client.event.RenderItemEvent;
 import com.mrcrayfish.petyourwolf.common.CustomDataParameters;
 import com.mrcrayfish.petyourwolf.network.PacketHandler;
 import com.mrcrayfish.petyourwolf.network.message.MessagePet;
@@ -10,11 +9,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.model.PlayerModel;
 import net.minecraft.client.renderer.entity.model.RendererModel;
 import net.minecraft.entity.passive.WolfEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Hand;
 import net.minecraft.util.HandSide;
 import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.EntityRayTraceResult;
-import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.client.event.RenderSpecificHandEvent;
 import net.minecraftforge.event.TickEvent;
@@ -33,7 +31,14 @@ public class ClientEvents
     @SubscribeEvent
     public void onClientTick(TickEvent.ClientTickEvent event)
     {
-        if(KeyBindings.PET.isKeyDown() && this.getNearestWolf() != null)
+        if(event.phase != TickEvent.Phase.START)
+            return;
+
+        Minecraft mc = Minecraft.getInstance();
+        if(mc.player == null)
+            return;
+
+        if(KeyBindings.PET.isKeyDown() && !mc.player.isSneaking() && this.getNearestWolf() != null)
         {
             if(!this.pressed)
             {
@@ -70,24 +75,35 @@ public class ClientEvents
             RendererModel offHand = event.getPlayer().getPrimaryHand() == HandSide.RIGHT ? model.bipedLeftArm : model.bipedRightArm;
             boolean rightHanded = mainHand == model.bipedRightArm;
 
-            float deltaRotation = rightHanded ? 15F : -15F;
+            float renderYawOffset = event.getPlayer().prevRenderYawOffset + (event.getPlayer().renderYawOffset - event.getPlayer().prevRenderYawOffset) * event.getPartialTicks();
+            float deltaRotation = rightHanded ? 0F : -0F;
             WolfEntity entity = this.getNearestWolf();
             if(entity != null)
             {
-                float renderYawOffset = event.getPlayer().prevRenderYawOffset + (event.getPlayer().renderYawOffset - event.getPlayer().prevRenderYawOffset) * event.getPartialTicks();
-                Vec3d bodyVec = Vec3d.fromPitchYaw(0F, renderYawOffset);
+                PlayerEntity player = event.getPlayer();
+
+                Vec3d bodyVec = Vec3d.fromPitchYaw(0F, renderYawOffset + 90);
                 Vec3d playerLookVec = bodyVec.normalize();
                 Vec3d playerLookVecRotated = playerLookVec.rotateYaw(rightHanded ? 90F : -90F);
-                Vec3d playerArmVec = event.getEntity().getPositionVec().add(playerLookVec.x * 0.5, 0, playerLookVec.z * 0.5).add(playerLookVecRotated.x * 0.35, 0, playerLookVecRotated.z * 0.35);
-                Vec3d wolfLookVec = entity.getLookVec().normalize();
-                Vec3d wolfHeadPos = entity.getPositionVec().add(wolfLookVec.x * 0.75, 0, wolfLookVec.z * 0.75);
+
+                double playerPosX = player.prevPosX + (player.posX - player.prevPosX) * event.getPartialTicks();
+                double playerPosY = player.prevPosY + (player.posY - player.prevPosY) * event.getPartialTicks();
+                double playerPosZ = player.prevPosZ + (player.posZ - player.prevPosZ) * event.getPartialTicks();
+                Vec3d playerArmVec = new Vec3d(playerPosX, playerPosY, playerPosZ).add(playerLookVec.x * 0.5, 0, playerLookVec.z * 0.5).add(playerLookVecRotated.x * 0.45, 0, playerLookVecRotated.z * 0.45);
+
+                float wolfRenderYawOffset = entity.prevRenderYawOffset + (entity.renderYawOffset - entity.prevRenderYawOffset) * event.getPartialTicks();
+                Vec3d wolfBodyVec = Vec3d.fromPitchYaw(0F, wolfRenderYawOffset);
+                Vec3d wolfLookVec = wolfBodyVec.normalize();
+                Vec3d wolfHeadPos = entity.getPositionVec().add(wolfLookVec.x * 0.35, 0, wolfLookVec.z * 0.35);
+
                 double dX = wolfHeadPos.x - playerArmVec.x;
                 double dZ = wolfHeadPos.z - playerArmVec.z;
-                deltaRotation += (float)(-Math.atan2(dZ, dX)) * (180F / (float)Math.PI) + renderYawOffset + 90;
+                deltaRotation += (float)(Math.atan2(dZ, dX)) * (180F / (float)Math.PI) - 90;
             }
 
             mainHand.rotateAngleX = (float) Math.toRadians(-75F);
-            mainHand.rotateAngleY = (float) Math.toRadians(Math.sin((event.getPlayer().ticksExisted + event.getPartialTicks()) * 0.25) * 20 - deltaRotation);
+            float animation = (float) Math.sin((event.getPlayer().ticksExisted + event.getPartialTicks()) * 0.25) * 10 - 5;
+            mainHand.rotateAngleY = (float) Math.toRadians(animation + deltaRotation - renderYawOffset);
             mainHand.offsetY = 0.25F;
             mainHand.offsetZ = -0.4F;
 
