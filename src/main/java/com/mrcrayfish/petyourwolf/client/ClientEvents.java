@@ -13,6 +13,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Hand;
 import net.minecraft.util.HandSide;
 import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.client.event.RenderSpecificHandEvent;
 import net.minecraftforge.event.TickEvent;
@@ -76,13 +77,14 @@ public class ClientEvents
             boolean rightHanded = mainHand == model.bipedRightArm;
 
             float renderYawOffset = event.getPlayer().prevRenderYawOffset + (event.getPlayer().renderYawOffset - event.getPlayer().prevRenderYawOffset) * event.getPartialTicks();
-            float deltaRotation = rightHanded ? 0F : -0F;
+            renderYawOffset = MathHelper.wrapDegrees(renderYawOffset + 90);
+            float deltaRotation = rightHanded ? 90F : -90F;
             WolfEntity entity = this.getNearestWolf();
             if(entity != null)
             {
                 PlayerEntity player = event.getPlayer();
 
-                Vec3d bodyVec = Vec3d.fromPitchYaw(0F, renderYawOffset + 90);
+                Vec3d bodyVec = Vec3d.fromPitchYaw(0F, renderYawOffset);
                 Vec3d playerLookVec = bodyVec.normalize();
                 Vec3d playerLookVecRotated = playerLookVec.rotateYaw(rightHanded ? 90F : -90F);
 
@@ -92,6 +94,7 @@ public class ClientEvents
                 Vec3d playerArmVec = new Vec3d(playerPosX, playerPosY, playerPosZ).add(playerLookVec.x * 0.5, 0, playerLookVec.z * 0.5).add(playerLookVecRotated.x * 0.45, 0, playerLookVecRotated.z * 0.45);
 
                 float wolfRenderYawOffset = entity.prevRenderYawOffset + (entity.renderYawOffset - entity.prevRenderYawOffset) * event.getPartialTicks();
+                wolfRenderYawOffset = MathHelper.wrapDegrees(wolfRenderYawOffset);
                 Vec3d wolfBodyVec = Vec3d.fromPitchYaw(0F, wolfRenderYawOffset);
                 Vec3d wolfLookVec = wolfBodyVec.normalize();
                 Vec3d wolfHeadPos = entity.getPositionVec().add(wolfLookVec.x * 0.35, 0, wolfLookVec.z * 0.35);
