@@ -1,6 +1,7 @@
 package com.mrcrayfish.petyourwolf.common;
 
 import com.mrcrayfish.petyourwolf.Reference;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.passive.WolfEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.particles.ParticleTypes;
@@ -33,7 +34,10 @@ public class PettingTracker
         WolfEntity wolf = getNearestTamedWolf(entity);
         if(wolf != null)
         {
-            wolf.setSitting(true);
+            wolf.getAISit().setSitting(true);
+            wolf.setJumping(false);
+            wolf.getNavigator().clearPath();
+            wolf.setAttackTarget(null);
         }
     }
 
