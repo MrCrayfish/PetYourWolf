@@ -87,7 +87,7 @@ public class PettingTracker
     }
 
     @Nullable
-    private static WolfEntity getNearestTamedWolf(PlayerEntity entity)
+    public static WolfEntity getNearestTamedWolf(PlayerEntity entity)
     {
         Vec3d lookVec = entity.getLookVec().normalize();
         Vec3d targetPos = entity.getPositionVec().add(lookVec.x, 1, lookVec.z);

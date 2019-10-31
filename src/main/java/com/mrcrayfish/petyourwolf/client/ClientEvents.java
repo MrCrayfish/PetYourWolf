@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.entity.model.PlayerModel;
 import net.minecraft.client.renderer.entity.model.RendererModel;
 import net.minecraft.entity.passive.WolfEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.particles.ParticleTypes;
 import net.minecraft.util.Hand;
 import net.minecraft.util.HandSide;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -39,7 +40,7 @@ public class ClientEvents
         if(mc.player == null)
             return;
 
-        if(KeyBindings.PET.isKeyDown() && !mc.player.isSneaking() && this.getNearestWolf() != null)
+        if(KeyBindings.PET.isKeyDown() && !mc.player.isSneaking() && this.getNearestWolf(mc.player, 0F) != null)
         {
             if(!this.pressed)
             {
@@ -79,7 +80,7 @@ public class ClientEvents
             float renderYawOffset = event.getPlayer().prevRenderYawOffset + (event.getPlayer().renderYawOffset - event.getPlayer().prevRenderYawOffset) * event.getPartialTicks();
             renderYawOffset = MathHelper.wrapDegrees(renderYawOffset + 90);
             float deltaRotation = rightHanded ? 90F : -90F;
-            WolfEntity entity = this.getNearestWolf();
+            WolfEntity entity = this.getNearestWolf(event.getPlayer(), event.getPartialTicks());
             if(entity != null)
             {
                 PlayerEntity player = event.getPlayer();
@@ -97,7 +98,7 @@ public class ClientEvents
                 wolfRenderYawOffset = MathHelper.wrapDegrees(wolfRenderYawOffset);
                 Vec3d wolfBodyVec = Vec3d.fromPitchYaw(0F, wolfRenderYawOffset);
                 Vec3d wolfLookVec = wolfBodyVec.normalize();
-                Vec3d wolfHeadPos = entity.getPositionVec().add(wolfLookVec.x * 0.35, 0, wolfLookVec.z * 0.35);
+                Vec3d wolfHeadPos = entity.getPositionVec().add(wolfLookVec.x * 0.4, entity.getEyeHeight(), wolfLookVec.z * 0.4);
 
                 double dX = wolfHeadPos.x - playerArmVec.x;
                 double dZ = wolfHeadPos.z - playerArmVec.z;
@@ -128,19 +129,18 @@ public class ClientEvents
     }
 
     @Nullable
-    private WolfEntity getNearestWolf()
+    private WolfEntity getNearestWolf(PlayerEntity player, float partialTicks)
     {
-        Minecraft mc = Minecraft.getInstance();
-        Vec3d lookVec = mc.player.getLookVec().normalize();
-        Vec3d targetPos = mc.player.getPositionVec().add(lookVec.x, 1, lookVec.z);
-        List<WolfEntity> wolves = mc.world.getEntitiesWithinAABB(WolfEntity.class, new AxisAlignedBB(targetPos.subtract(1, 1, 1), targetPos.add(1, 1, 1)));
+        Vec3d lookVec = player.getLookVec().normalize();
+        Vec3d targetPos = player.getPositionVec().add(lookVec.x, 1, lookVec.z);
+        List<WolfEntity> wolves = player.world.getEntitiesWithinAABB(WolfEntity.class, new AxisAlignedBB(targetPos.subtract(1, 1, 1), targetPos.add(1, 1, 1)));
         if(wolves.size() > 0)
         {
             float closestDistance = 0;
             WolfEntity entity = null;
             for(WolfEntity wolf : wolves)
             {
-                float distance = mc.player.getDistance(wolf);
+                float distance = player.getDistance(wolf);
                 if(distance < closestDistance || closestDistance == 0F)
                 {
                     closestDistance = distance;
