@@ -68,13 +68,17 @@ public class ClientEvents
             PlayerModel model = event.getModelPlayer();
             model.bipedHead.offsetY = 0.25F;
             model.bipedHead.offsetZ = -0.45F;
+            this.copyModelProperties(model.bipedHeadwear, model.bipedHead);
 
             model.bipedBody.rotateAngleX = (float) Math.toRadians(45F);
             model.bipedBody.offsetY = 0.25F;
             model.bipedBody.offsetZ = -0.45F;
+            this.copyModelProperties(model.bipedBodyWear, model.bipedBody);
 
             RendererModel mainHand = event.getPlayer().getPrimaryHand() == HandSide.RIGHT ? model.bipedRightArm : model.bipedLeftArm;
             RendererModel offHand = event.getPlayer().getPrimaryHand() == HandSide.RIGHT ? model.bipedLeftArm : model.bipedRightArm;
+            RendererModel mainHandWear = event.getPlayer().getPrimaryHand() == HandSide.RIGHT ? model.bipedRightArmwear : model.bipedLeftArmwear;
+            RendererModel offHandWear = event.getPlayer().getPrimaryHand() == HandSide.RIGHT ? model.bipedLeftArmwear : model.bipedRightArmwear;
             boolean rightHanded = mainHand == model.bipedRightArm;
 
             float renderYawOffset = event.getPlayer().prevRenderYawOffset + (event.getPlayer().renderYawOffset - event.getPlayer().prevRenderYawOffset) * event.getPartialTicks();
@@ -110,11 +114,21 @@ public class ClientEvents
             mainHand.rotateAngleY = (float) Math.toRadians(animation + deltaRotation - renderYawOffset);
             mainHand.offsetY = 0.25F;
             mainHand.offsetZ = -0.4F;
+            this.copyModelProperties(mainHandWear, mainHand);
 
             offHand.rotateAngleX = (float) Math.toRadians(45F);
             offHand.offsetY = 0.25F;
             offHand.offsetZ = -0.4F;
+            this.copyModelProperties(offHandWear, offHand);
         }
+    }
+
+    private void copyModelProperties(RendererModel to, RendererModel from)
+    {
+        to.copyModelAngles(from);
+        to.offsetX = from.offsetX;
+        to.offsetY = from.offsetY;
+        to.offsetZ = from.offsetZ;
     }
 
     @SubscribeEvent
