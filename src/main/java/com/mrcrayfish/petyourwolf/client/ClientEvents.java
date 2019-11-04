@@ -21,7 +21,10 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import javax.annotation.Nullable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * Author: MrCrayfish
@@ -29,6 +32,8 @@ import java.util.List;
 public class ClientEvents
 {
     private boolean pressed = false;
+
+    private Map<UUID, AnimationTracker> animationTrackerMap = new HashMap<>();
 
     @SubscribeEvent
     public void onClientTick(TickEvent.ClientTickEvent event)
@@ -56,23 +61,38 @@ public class ClientEvents
     }
 
     @SubscribeEvent
-    public void onSetupAngles(PlayerModelEvent.SetupAngles event)
+    public void onPlayerTick(TickEvent.PlayerTickEvent event)
+    {
+        if(event.phase != TickEvent.Phase.START)
+            return;
+
+        UUID playerUuid = event.player.getUniqueID();
+        AnimationTracker tracker = animationTrackerMap.computeIfAbsent(playerUuid, uuid -> new AnimationTracker());
+        tracker.tick(event.player);
+    }
+
+    @SubscribeEvent
+    public void onSetupAngles(PlayerModelEvent.SetupAngles.Post event)
     {
         if(event.getEntity().equals(Minecraft.getInstance().player) && Minecraft.getInstance().gameSettings.thirdPersonView == 0)
         {
             return;
         }
 
-        if(event.getEntity().getDataManager().get(CustomDataParameters.PETTING))
+        PlayerEntity player = event.getPlayer();
+        AnimationTracker tracker = animationTrackerMap.computeIfAbsent(player.getUniqueID(), uuid -> new AnimationTracker());
+        if(tracker.getCounter() != 0 || tracker.getPrevCounter() != 0)
         {
+            float percent = (tracker.getPrevCounter() + (tracker.getCounter() - tracker.getPrevCounter()) * event.getPartialTicks()) / (float) AnimationTracker.MAX_ANIMATION_TICKS;
+
             PlayerModel model = event.getModelPlayer();
-            model.bipedHead.offsetY = 0.25F;
-            model.bipedHead.offsetZ = -0.45F;
+            model.bipedHead.offsetY = 0.25F * percent;
+            model.bipedHead.offsetZ = -0.45F * percent;
             this.copyModelProperties(model.bipedHeadwear, model.bipedHead);
 
-            model.bipedBody.rotateAngleX = (float) Math.toRadians(45F);
-            model.bipedBody.offsetY = 0.25F;
-            model.bipedBody.offsetZ = -0.45F;
+            model.bipedBody.rotateAngleX = (float) Math.toRadians(45F * percent);
+            model.bipedBody.offsetY = 0.25F * percent;
+            model.bipedBody.offsetZ = -0.45F * percent;
             this.copyModelProperties(model.bipedBodyWear, model.bipedBody);
 
             RendererModel mainHand = event.getPlayer().getPrimaryHand() == HandSide.RIGHT ? model.bipedRightArm : model.bipedLeftArm;
@@ -87,8 +107,6 @@ public class ClientEvents
             WolfEntity entity = this.getNearestWolf(event.getPlayer(), event.getPartialTicks());
             if(entity != null)
             {
-                PlayerEntity player = event.getPlayer();
-
                 Vec3d bodyVec = Vec3d.fromPitchYaw(0F, renderYawOffset);
                 Vec3d playerLookVec = bodyVec.normalize();
                 Vec3d playerLookVecRotated = playerLookVec.rotateYaw(rightHanded ? 90F : -90F);
@@ -107,18 +125,23 @@ public class ClientEvents
                 double dX = wolfHeadPos.x - playerArmVec.x;
                 double dZ = wolfHeadPos.z - playerArmVec.z;
                 deltaRotation += (float)(Math.atan2(dZ, dX)) * (180F / (float)Math.PI) - 90;
+                tracker.setLastDeltaRotation(deltaRotation);
+            }
+            else
+            {
+                deltaRotation = tracker.getLastDeltaRotation();
             }
 
-            mainHand.rotateAngleX = (float) Math.toRadians(-75F);
+            mainHand.rotateAngleX = (float) Math.toRadians(-75F) * percent;
             float animation = (float) Math.sin((event.getPlayer().ticksExisted + event.getPartialTicks()) * 0.25) * 10 - 5;
             mainHand.rotateAngleY = (float) Math.toRadians(animation + deltaRotation - renderYawOffset);
-            mainHand.offsetY = 0.25F;
-            mainHand.offsetZ = -0.4F;
+            mainHand.offsetY = 0.25F * percent;
+            mainHand.offsetZ = -0.4F * percent;
             this.copyModelProperties(mainHandWear, mainHand);
 
-            offHand.rotateAngleX = (float) Math.toRadians(45F);
-            offHand.offsetY = 0.25F;
-            offHand.offsetZ = -0.4F;
+            offHand.rotateAngleX = (float) Math.toRadians(45F) * percent;
+            offHand.offsetY = 0.25F * percent;
+            offHand.offsetZ = -0.4F * percent;
             this.copyModelProperties(offHandWear, offHand);
         }
     }
