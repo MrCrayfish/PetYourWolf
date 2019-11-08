@@ -6,16 +6,16 @@ import org.apache.commons.lang3.tuple.Pair;
 /**
  * Author: MrCrayfish
  */
-public class ModConfig
+public class Config
 {
-    public static class Server
+    public static class Common
     {
         public final ForgeConfigSpec.IntValue healTime;
         public final ForgeConfigSpec.DoubleValue healAmount;
 
-        Server(ForgeConfigSpec.Builder builder)
+        Common(ForgeConfigSpec.Builder builder)
         {
-            builder.comment("Client configuration settings").push("server");
+            builder.comment("Common configuration settings").push("common");
             this.healTime = builder
                     .comment("The amount of ticks to wait while petting before it heals the dog")
                     .translation("petyourwolf.configgui.healTime")
@@ -23,18 +23,18 @@ public class ModConfig
             this.healAmount = builder
                     .comment("The amount of health the dog recieves from being pet")
                     .translation("petyourwolf.configgui.healAmount")
-                    .defineInRange("petyourwolf.configgui.healAmount", 1.0, 0.5, 20.0);
+                    .defineInRange("healAmount", 1.0, 0.5, 20.0);
             builder.pop();
         }
     }
 
-    static final ForgeConfigSpec serverSpec;
-    public static final ModConfig.Server SERVER;
+    static final ForgeConfigSpec commonSpec;
+    public static final Common COMMON;
 
     static
     {
-        final Pair<ModConfig.Server, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(ModConfig.Server::new);
-        serverSpec = specPair.getRight();
-        SERVER = specPair.getLeft();
+        final Pair<Common, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(Common::new);
+        commonSpec = specPair.getRight();
+        COMMON = specPair.getLeft();
     }
 }

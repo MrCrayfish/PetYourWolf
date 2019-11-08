@@ -1,8 +1,7 @@
 package com.mrcrayfish.petyourwolf.common;
 
-import com.mrcrayfish.petyourwolf.ModConfig;
+import com.mrcrayfish.petyourwolf.Config;
 import com.mrcrayfish.petyourwolf.Reference;
-import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.passive.WolfEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.particles.ParticleTypes;
@@ -64,14 +63,14 @@ public class PettingTracker
         {
             int timer = TIMER_MAP.get(uuid) + 1;
             TIMER_MAP.put(uuid, timer);
-            if(timer >= ModConfig.SERVER.healTime.get())
+            if(timer >= Config.COMMON.healTime.get())
             {
                 WolfEntity wolf = getNearestTamedWolf(player);
                 if(wolf != null)
                 {
                     if(wolf.getHealth() < wolf.getMaxHealth())
                     {
-                        wolf.setHealth((float) (wolf.getHealth() + ModConfig.SERVER.healAmount.get()));
+                        wolf.setHealth((float) (wolf.getHealth() + Config.COMMON.healAmount.get()));
                     }
                     for(int i = 0; i < 7; i++)
                     {
