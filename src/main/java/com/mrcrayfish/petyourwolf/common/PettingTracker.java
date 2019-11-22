@@ -2,6 +2,9 @@ package com.mrcrayfish.petyourwolf.common;
 
 import com.mrcrayfish.petyourwolf.Config;
 import com.mrcrayfish.petyourwolf.Reference;
+import net.minecraft.entity.passive.CatEntity;
+import net.minecraft.entity.passive.ParrotEntity;
+import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.passive.WolfEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.particles.ParticleTypes;
@@ -31,13 +34,13 @@ public class PettingTracker
     public static void startPetting(PlayerEntity entity)
     {
         TIMER_MAP.put(entity.getUniqueID(), 0);
-        WolfEntity wolf = getNearestTamedWolf(entity);
-        if(wolf != null)
+        TameableEntity tamable = getNearestTamable(entity);
+        if(tamable != null)
         {
-            wolf.getAISit().setSitting(true);
-            wolf.setJumping(false);
-            wolf.getNavigator().clearPath();
-            wolf.setAttackTarget(null);
+            tamable.getAISit().setSitting(true);
+            tamable.setJumping(false);
+            tamable.getNavigator().clearPath();
+            tamable.setAttackTarget(null);
         }
     }
 
@@ -46,17 +49,17 @@ public class PettingTracker
         TIMER_MAP.remove(entity.getUniqueID());
     }
 
-    private PettingTracker() {}
+    private PettingTracker()
+    {
+    }
 
     @SubscribeEvent
     public static void onTick(TickEvent.PlayerTickEvent event)
     {
-        if(event.phase != TickEvent.Phase.START)
-            return;
+        if(event.phase != TickEvent.Phase.START) return;
 
         PlayerEntity player = event.player;
-        if(player.world.isRemote)
-            return;
+        if(player.world.isRemote) return;
 
         UUID uuid = player.getUniqueID();
         if(player.getDataManager().get(CustomDataParameters.PETTING) && TIMER_MAP.containsKey(uuid))
@@ -65,21 +68,34 @@ public class PettingTracker
             TIMER_MAP.put(uuid, timer);
             if(timer >= Config.COMMON.healTime.get())
             {
-                WolfEntity wolf = getNearestTamedWolf(player);
-                if(wolf != null)
+                TameableEntity tameableEntity = getNearestTamable(player);
+                if(tameableEntity != null)
                 {
-                    if(wolf.getHealth() < wolf.getMaxHealth())
+                    if(tameableEntity.getHealth() < tameableEntity.getMaxHealth())
                     {
-                        wolf.setHealth((float) (wolf.getHealth() + Config.COMMON.healAmount.get()));
+                        tameableEntity.setHealth((float) (tameableEntity.getHealth() + Config.COMMON.healAmount.get()));
                     }
+
                     for(int i = 0; i < 7; i++)
                     {
-                        double offsetX = wolf.getRNG().nextGaussian() * 0.02D;
-                        double offsetY = wolf.getRNG().nextGaussian() * 0.02D;
-                        double offsetZ = wolf.getRNG().nextGaussian() * 0.02D;
-                        ((ServerWorld)wolf.world).spawnParticle(ParticleTypes.HEART, wolf.posX + (double) (wolf.getRNG().nextFloat() * wolf.getWidth() * 2.0F) - (double) wolf.getWidth(), wolf.posY + 0.5D + (double) (wolf.getRNG().nextFloat() * wolf.getHeight()), wolf.posZ + (double) (wolf.getRNG().nextFloat() * wolf.getWidth() * 2.0F) - (double) wolf.getWidth(), 1,offsetX,offsetY, offsetZ, 0);
+                        double offsetX = tameableEntity.getRNG().nextGaussian() * 0.02D;
+                        double offsetY = tameableEntity.getRNG().nextGaussian() * 0.02D;
+                        double offsetZ = tameableEntity.getRNG().nextGaussian() * 0.02D;
+                        ((ServerWorld) tameableEntity.world).spawnParticle(ParticleTypes.HEART, tameableEntity.posX + (double) (tameableEntity.getRNG().nextFloat() * tameableEntity.getWidth() * 2.0F) - (double) tameableEntity.getWidth(), tameableEntity.posY + 0.5D + (double) (tameableEntity.getRNG().nextFloat() * tameableEntity.getHeight()), tameableEntity.posZ + (double) (tameableEntity.getRNG().nextFloat() * tameableEntity.getWidth() * 2.0F) - (double) tameableEntity.getWidth(), 1, offsetX, offsetY, offsetZ, 0);
                     }
-                    wolf.world.playSound(null, wolf.posX, wolf.posY, wolf.posZ, SoundEvents.ENTITY_WOLF_WHINE, SoundCategory.NEUTRAL, 0.7F, 0.9F + wolf.getRNG().nextFloat() * 0.2F);
+
+                    if(tameableEntity instanceof WolfEntity)
+                    {
+                        tameableEntity.world.playSound(null, tameableEntity.posX, tameableEntity.posY, tameableEntity.posZ, SoundEvents.ENTITY_WOLF_WHINE, SoundCategory.NEUTRAL, 0.7F, 0.9F + tameableEntity.getRNG().nextFloat() * 0.2F);
+                    }
+                    else if(tameableEntity instanceof CatEntity)
+                    {
+                        tameableEntity.world.playSound(null, tameableEntity.posX, tameableEntity.posY, tameableEntity.posZ, SoundEvents.ENTITY_CAT_PURR, SoundCategory.NEUTRAL, 0.7F, 0.9F + tameableEntity.getRNG().nextFloat() * 0.2F);
+                    }
+                    else if(tameableEntity instanceof ParrotEntity)
+                    {
+                        tameableEntity.world.playSound(null, tameableEntity.posX, tameableEntity.posY, tameableEntity.posZ, SoundEvents.ENTITY_PARROT_AMBIENT, SoundCategory.NEUTRAL, 0.7F, 0.9F + tameableEntity.getRNG().nextFloat() * 0.2F);
+                    }
                 }
                 TIMER_MAP.put(uuid, 0);
             }
@@ -87,28 +103,28 @@ public class PettingTracker
     }
 
     @Nullable
-    public static WolfEntity getNearestTamedWolf(PlayerEntity entity)
+    public static TameableEntity getNearestTamable(PlayerEntity entity)
     {
         Vec3d lookVec = entity.getLookVec().normalize();
         Vec3d targetPos = entity.getPositionVec().add(lookVec.x, 1, lookVec.z);
-        List<WolfEntity> wolves = entity.world.getEntitiesWithinAABB(WolfEntity.class, new AxisAlignedBB(targetPos.subtract(1, 1, 1), targetPos.add(1, 1, 1)));
-        if(wolves.size() > 0)
+        List<TameableEntity> tamableEntities = entity.world.getEntitiesWithinAABB(TameableEntity.class, new AxisAlignedBB(targetPos.subtract(1, 1, 1), targetPos.add(1, 1, 1)));
+        if(tamableEntities.size() > 0)
         {
             float closestDistance = 0;
-            WolfEntity closetWolf = null;
-            for(WolfEntity wolf : wolves)
+            TameableEntity closetTamable = null;
+            for(TameableEntity tameableEntity : tamableEntities)
             {
-                if(wolf.isTamed() && wolf.getOwnerId() != null && wolf.getOwnerId().equals(entity.getUniqueID()))
+                if(tameableEntity.isTamed() && tameableEntity.getOwnerId() != null && tameableEntity.getOwnerId().equals(entity.getUniqueID()))
                 {
-                    float distance = entity.getDistance(wolf);
+                    float distance = entity.getDistance(tameableEntity);
                     if(distance < closestDistance || closestDistance == 0F)
                     {
                         closestDistance = distance;
-                        closetWolf = wolf;
+                        closetTamable = tameableEntity;
                     }
                 }
             }
-            return closetWolf;
+            return closetTamable;
         }
         return null;
     }

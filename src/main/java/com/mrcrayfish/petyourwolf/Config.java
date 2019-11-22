@@ -21,7 +21,7 @@ public class Config
                     .translation("petyourwolf.configgui.healTime")
                     .defineInRange("healIntervalTicks", 100, 1, 1000);
             this.healAmount = builder
-                    .comment("The amount of health the dog recieves from being pet")
+                    .comment("The amount of health the tameable mob recieves from being pet")
                     .translation("petyourwolf.configgui.healAmount")
                     .defineInRange("healAmount", 1.0, 0.5, 20.0);
             builder.pop();

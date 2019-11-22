@@ -11,6 +11,7 @@ public class AnimationTracker
     public static final int MAX_ANIMATION_TICKS = 5;
 
     private float lastDeltaRotation;
+    private float lastArmAngle;
     private int counter;
     private int prevCounter;
 
@@ -48,5 +49,15 @@ public class AnimationTracker
     public float getLastDeltaRotation()
     {
         return lastDeltaRotation;
+    }
+
+    public void setLastArmAngle(float lastArmAngle)
+    {
+        this.lastArmAngle = lastArmAngle;
+    }
+
+    public float getLastArmAngle()
+    {
+        return lastArmAngle;
     }
 }

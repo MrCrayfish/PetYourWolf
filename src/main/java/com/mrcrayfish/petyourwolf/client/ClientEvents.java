@@ -8,6 +8,9 @@ import com.mrcrayfish.petyourwolf.network.message.MessagePet;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.model.PlayerModel;
 import net.minecraft.client.renderer.entity.model.RendererModel;
+import net.minecraft.entity.passive.CatEntity;
+import net.minecraft.entity.passive.ParrotEntity;
+import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.passive.WolfEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.particles.ParticleTypes;
@@ -45,7 +48,7 @@ public class ClientEvents
         if(mc.player == null)
             return;
 
-        if(KeyBindings.PET.isKeyDown() && !mc.player.isSneaking() && this.getNearestWolf(mc.player, 0F) != null)
+        if(KeyBindings.PET.isKeyDown() && !mc.player.isSneaking() && this.getNearestTamable(mc.player) != null)
         {
             if(!this.pressed)
             {
@@ -101,10 +104,11 @@ public class ClientEvents
             RendererModel offHandWear = event.getPlayer().getPrimaryHand() == HandSide.RIGHT ? model.bipedLeftArmwear : model.bipedRightArmwear;
             boolean rightHanded = mainHand == model.bipedRightArm;
 
+            float armAngle = -75F;
             float renderYawOffset = event.getPlayer().prevRenderYawOffset + (event.getPlayer().renderYawOffset - event.getPlayer().prevRenderYawOffset) * event.getPartialTicks();
             renderYawOffset = MathHelper.wrapDegrees(renderYawOffset + 90);
             float deltaRotation = rightHanded ? 90F : -90F;
-            WolfEntity entity = this.getNearestWolf(event.getPlayer(), event.getPartialTicks());
+            TameableEntity entity = this.getNearestTamable(event.getPlayer());
             if(entity != null)
             {
                 Vec3d bodyVec = Vec3d.fromPitchYaw(0F, renderYawOffset);
@@ -116,23 +120,42 @@ public class ClientEvents
                 double playerPosZ = player.prevPosZ + (player.posZ - player.prevPosZ) * event.getPartialTicks();
                 Vec3d playerArmVec = new Vec3d(playerPosX, playerPosY, playerPosZ).add(playerLookVec.x * 0.5, 0, playerLookVec.z * 0.5).add(playerLookVecRotated.x * 0.45, 0, playerLookVecRotated.z * 0.45);
 
-                float wolfRenderYawOffset = entity.prevRenderYawOffset + (entity.renderYawOffset - entity.prevRenderYawOffset) * event.getPartialTicks();
-                wolfRenderYawOffset = MathHelper.wrapDegrees(wolfRenderYawOffset);
-                Vec3d wolfBodyVec = Vec3d.fromPitchYaw(0F, wolfRenderYawOffset);
-                Vec3d wolfLookVec = wolfBodyVec.normalize();
-                Vec3d wolfHeadPos = entity.getPositionVec().add(wolfLookVec.x * 0.4, entity.getEyeHeight(), wolfLookVec.z * 0.4);
+                float tamableRenderYawOffset = entity.prevRenderYawOffset + (entity.renderYawOffset - entity.prevRenderYawOffset) * event.getPartialTicks();
+                tamableRenderYawOffset = MathHelper.wrapDegrees(tamableRenderYawOffset);
+                Vec3d tamableBodyVec = Vec3d.fromPitchYaw(0F, tamableRenderYawOffset);
+                Vec3d tamableLookVec = tamableBodyVec.normalize();
 
-                double dX = wolfHeadPos.x - playerArmVec.x;
-                double dZ = wolfHeadPos.z - playerArmVec.z;
+                double centerOffset = 0.0;
+                if(entity instanceof WolfEntity)
+                {
+                    centerOffset = 0.4;
+                    armAngle = -75F;
+                }
+                else if(entity instanceof CatEntity)
+                {
+                    centerOffset = 0.3;
+                    armAngle = -55F;
+                }
+                else if(entity instanceof ParrotEntity)
+                {
+                    centerOffset = 0.1;
+                    armAngle = -35F;
+                }
+
+                Vec3d headPos = entity.getPositionVec().add(tamableLookVec.x * centerOffset, 0, tamableLookVec.z * centerOffset);
+                double dX = headPos.x - playerArmVec.x;
+                double dZ = headPos.z - playerArmVec.z;
                 deltaRotation += (float)(Math.atan2(dZ, dX)) * (180F / (float)Math.PI) - 90;
                 tracker.setLastDeltaRotation(deltaRotation);
+                tracker.setLastArmAngle(armAngle);
             }
             else
             {
                 deltaRotation = tracker.getLastDeltaRotation();
+                armAngle = tracker.getLastArmAngle();
             }
 
-            mainHand.rotateAngleX = (float) Math.toRadians(-75F) * percent;
+            mainHand.rotateAngleX = (float) Math.toRadians(armAngle) * percent;
             float animation = (float) Math.sin((event.getPlayer().ticksExisted + event.getPartialTicks()) * 0.25) * 10 - 5;
             mainHand.rotateAngleY = (float) Math.toRadians(animation + deltaRotation - renderYawOffset);
             mainHand.offsetY = 0.25F * percent;
@@ -166,22 +189,22 @@ public class ClientEvents
     }
 
     @Nullable
-    private WolfEntity getNearestWolf(PlayerEntity player, float partialTicks)
+    private TameableEntity getNearestTamable(PlayerEntity player)
     {
         Vec3d lookVec = player.getLookVec().normalize();
         Vec3d targetPos = player.getPositionVec().add(lookVec.x, 1, lookVec.z);
-        List<WolfEntity> wolves = player.world.getEntitiesWithinAABB(WolfEntity.class, new AxisAlignedBB(targetPos.subtract(1, 1, 1), targetPos.add(1, 1, 1)));
-        if(wolves.size() > 0)
+        List<TameableEntity> tameableEntities = player.world.getEntitiesWithinAABB(TameableEntity.class, new AxisAlignedBB(targetPos.subtract(1, 1, 1), targetPos.add(1, 1, 1)));
+        if(tameableEntities.size() > 0)
         {
             float closestDistance = 0;
-            WolfEntity entity = null;
-            for(WolfEntity wolf : wolves)
+            TameableEntity entity = null;
+            for(TameableEntity tameableEntity : tameableEntities)
             {
-                float distance = player.getDistance(wolf);
+                float distance = player.getDistance(tameableEntity);
                 if(distance < closestDistance || closestDistance == 0F)
                 {
                     closestDistance = distance;
-                    entity = wolf;
+                    entity = tameableEntity;
                 }
             }
             return entity;

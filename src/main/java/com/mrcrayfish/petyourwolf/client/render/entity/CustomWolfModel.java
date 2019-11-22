@@ -27,6 +27,6 @@ public class CustomWolfModel extends WolfModel<WolfEntity>
     private boolean isBeingPet(WolfEntity entityIn)
     {
         List<PlayerEntity> players = entityIn.world.getEntitiesWithinAABB(PlayerEntity.class, entityIn.getBoundingBox().grow(5, 5, 5), entity -> entity.getDataManager().get(CustomDataParameters.PETTING));
-        return players.stream().anyMatch(player -> PettingTracker.getNearestTamedWolf(player) == entityIn);
+        return players.stream().anyMatch(player -> PettingTracker.getNearestTamable(player) == entityIn);
     }
 }
