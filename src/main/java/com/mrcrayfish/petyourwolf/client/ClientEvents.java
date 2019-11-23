@@ -2,12 +2,14 @@ package com.mrcrayfish.petyourwolf.client;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mrcrayfish.obfuscate.client.event.PlayerModelEvent;
+import com.mrcrayfish.obfuscate.client.event.RenderItemEvent;
 import com.mrcrayfish.petyourwolf.common.CustomDataParameters;
 import com.mrcrayfish.petyourwolf.network.PacketHandler;
 import com.mrcrayfish.petyourwolf.network.message.MessagePet;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.model.PlayerModel;
 import net.minecraft.client.renderer.entity.model.RendererModel;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.passive.CatEntity;
 import net.minecraft.entity.passive.ParrotEntity;
 import net.minecraft.entity.passive.TameableEntity;
@@ -19,6 +21,7 @@ import net.minecraft.util.HandSide;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import net.minecraftforge.client.event.RenderPlayerEvent;
 import net.minecraftforge.client.event.RenderSpecificHandEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -185,6 +188,20 @@ public class ClientEvents
         {
             boolean rightHanded = mc.gameSettings.mainHand == HandSide.RIGHT ? event.getHand() == Hand.MAIN_HAND : event.getHand() == Hand.OFF_HAND;
             GlStateManager.rotated(-10F * Math.sin((mc.player.ticksExisted + event.getPartialTicks()) * 0.25) + (rightHanded ? 30F : -30F), 0, 1, 0.5);
+        }
+    }
+
+    @SubscribeEvent
+    public void onRenderThirdPersonHand(RenderItemEvent.Held.Pre event)
+    {
+        LivingEntity entity = event.getEntity();
+        AnimationTracker tracker = animationTrackerMap.computeIfAbsent(entity.getUniqueID(), uuid -> new AnimationTracker());
+        if(tracker.getCounter() != 0 || tracker.getPrevCounter() != 0)
+        {
+            if(event.getHandSide() == entity.getPrimaryHand())
+            {
+                event.setCanceled(true);
+            }
         }
     }
 
