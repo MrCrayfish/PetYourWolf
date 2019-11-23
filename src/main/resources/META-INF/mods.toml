@@ -24,3 +24,9 @@ description="Allows the player to pet their tamed wolfs and heal them"
     versionRange="[1.14.4]"
     ordering="NONE"
     side="BOTH"
+[[dependencies.petyourwolf]]
+    modId="obfuscate"
+    mandatory=true
+    versionRange="[0.3.3,)"
+    ordering="AFTER"
+    side="BOTH"
