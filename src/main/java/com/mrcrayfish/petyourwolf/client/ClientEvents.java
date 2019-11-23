@@ -198,10 +198,7 @@ public class ClientEvents
         AnimationTracker tracker = animationTrackerMap.computeIfAbsent(entity.getUniqueID(), uuid -> new AnimationTracker());
         if(tracker.getCounter() != 0 || tracker.getPrevCounter() != 0)
         {
-            if(event.getHandSide() == entity.getPrimaryHand())
-            {
-                event.setCanceled(true);
-            }
+            event.setCanceled(true);
         }
     }
 
