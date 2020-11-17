@@ -11,7 +11,7 @@ import net.minecraft.particles.ParticleTypes;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -37,7 +37,7 @@ public class PettingTracker
         TameableEntity tamable = getNearestTamable(entity);
         if(tamable != null)
         {
-            tamable.getAISit().setSitting(true);
+            tamable.func_233687_w_(true); //Set sitting
             tamable.setJumping(false);
             tamable.getNavigator().clearPath();
             tamable.setAttackTarget(null);
@@ -81,20 +81,20 @@ public class PettingTracker
                         double offsetX = tameableEntity.getRNG().nextGaussian() * 0.02D;
                         double offsetY = tameableEntity.getRNG().nextGaussian() * 0.02D;
                         double offsetZ = tameableEntity.getRNG().nextGaussian() * 0.02D;
-                        ((ServerWorld) tameableEntity.world).spawnParticle(ParticleTypes.HEART, tameableEntity.posX + (double) (tameableEntity.getRNG().nextFloat() * tameableEntity.getWidth() * 2.0F) - (double) tameableEntity.getWidth(), tameableEntity.posY + 0.5D + (double) (tameableEntity.getRNG().nextFloat() * tameableEntity.getHeight()), tameableEntity.posZ + (double) (tameableEntity.getRNG().nextFloat() * tameableEntity.getWidth() * 2.0F) - (double) tameableEntity.getWidth(), 1, offsetX, offsetY, offsetZ, 0);
+                        ((ServerWorld) tameableEntity.world).spawnParticle(ParticleTypes.HEART, tameableEntity.getPosX() + (double) (tameableEntity.getRNG().nextFloat() * tameableEntity.getWidth() * 2.0F) - (double) tameableEntity.getWidth(), tameableEntity.getPosY() + 0.5D + (double) (tameableEntity.getRNG().nextFloat() * tameableEntity.getHeight()), tameableEntity.getPosZ() + (double) (tameableEntity.getRNG().nextFloat() * tameableEntity.getWidth() * 2.0F) - (double) tameableEntity.getWidth(), 1, offsetX, offsetY, offsetZ, 0);
                     }
 
                     if(tameableEntity instanceof WolfEntity)
                     {
-                        tameableEntity.world.playSound(null, tameableEntity.posX, tameableEntity.posY, tameableEntity.posZ, SoundEvents.ENTITY_WOLF_WHINE, SoundCategory.NEUTRAL, 0.7F, 0.9F + tameableEntity.getRNG().nextFloat() * 0.2F);
+                        tameableEntity.world.playSound(null, tameableEntity.getPosX(), tameableEntity.getPosY(), tameableEntity.getPosZ(), SoundEvents.ENTITY_WOLF_WHINE, SoundCategory.NEUTRAL, 0.7F, 0.9F + tameableEntity.getRNG().nextFloat() * 0.2F);
                     }
                     else if(tameableEntity instanceof CatEntity)
                     {
-                        tameableEntity.world.playSound(null, tameableEntity.posX, tameableEntity.posY, tameableEntity.posZ, SoundEvents.ENTITY_CAT_PURR, SoundCategory.NEUTRAL, 0.7F, 0.9F + tameableEntity.getRNG().nextFloat() * 0.2F);
+                        tameableEntity.world.playSound(null, tameableEntity.getPosX(), tameableEntity.getPosY(), tameableEntity.getPosZ(), SoundEvents.ENTITY_CAT_PURR, SoundCategory.NEUTRAL, 0.7F, 0.9F + tameableEntity.getRNG().nextFloat() * 0.2F);
                     }
                     else if(tameableEntity instanceof ParrotEntity)
                     {
-                        tameableEntity.world.playSound(null, tameableEntity.posX, tameableEntity.posY, tameableEntity.posZ, SoundEvents.ENTITY_PARROT_AMBIENT, SoundCategory.NEUTRAL, 0.7F, 0.9F + tameableEntity.getRNG().nextFloat() * 0.2F);
+                        tameableEntity.world.playSound(null, tameableEntity.getPosX(), tameableEntity.getPosY(), tameableEntity.getPosZ(), SoundEvents.ENTITY_PARROT_AMBIENT, SoundCategory.NEUTRAL, 0.7F, 0.9F + tameableEntity.getRNG().nextFloat() * 0.2F);
                     }
                 }
                 TIMER_MAP.put(uuid, 0);
@@ -105,8 +105,8 @@ public class PettingTracker
     @Nullable
     public static TameableEntity getNearestTamable(PlayerEntity entity)
     {
-        Vec3d lookVec = entity.getLookVec().normalize();
-        Vec3d targetPos = entity.getPositionVec().add(lookVec.x, 1, lookVec.z);
+        Vector3d lookVec = entity.getLookVec().normalize();
+        Vector3d targetPos = entity.getPositionVec().add(lookVec.x, 1, lookVec.z);
         List<TameableEntity> tamableEntities = entity.world.getEntitiesWithinAABB(TameableEntity.class, new AxisAlignedBB(targetPos.subtract(1, 1, 1), targetPos.add(1, 1, 1)));
         if(tamableEntities.size() > 0)
         {

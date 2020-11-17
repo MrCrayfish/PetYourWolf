@@ -6,8 +6,10 @@ import com.mrcrayfish.petyourwolf.client.render.entity.CustomWolfModel;
 import com.mrcrayfish.petyourwolf.common.CommonEvents;
 import com.mrcrayfish.petyourwolf.network.PacketHandler;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.LivingRenderer;
 import net.minecraft.client.renderer.entity.model.WolfModel;
+import net.minecraft.entity.EntityType;
 import net.minecraft.entity.passive.WolfEntity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -49,7 +51,7 @@ public class PetYourWolfMod
     @OnlyIn(Dist.CLIENT)
     private void patchWolfModel()
     {
-        LivingRenderer<WolfEntity, WolfModel<WolfEntity>> wolfRenderer = Minecraft.getInstance().getRenderManager().getRenderer(WolfEntity.class);
+        LivingRenderer<?, ?> wolfRenderer = (LivingRenderer<?, ?>) Minecraft.getInstance().getRenderManager().renderers.get(EntityType.WOLF);
         ObfuscationReflectionHelper.setPrivateValue(LivingRenderer.class, wolfRenderer, new CustomWolfModel(), "field_77045_g");
     }
 }

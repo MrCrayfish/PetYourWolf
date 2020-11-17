@@ -11,14 +11,14 @@ buildscript {
 apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'maven-publish'
 
-version = project.property('mod.version') + '-1.14.4'
+version = project.property('mod.version') + '-1.16.3'
 group = 'com.mrcrayfish'
 archivesBaseName = project.property('mod.id')
 
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
 
 minecraft {
-    mappings channel: 'snapshot', version: '20190719-1.14.3'
+    mappings channel: 'snapshot', version: '20200514-1.16'
 
     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 
@@ -61,14 +61,13 @@ minecraft {
 
 repositories {
     maven {
-        name = "CurseForge"
-        url = "https://minecraft.curseforge.com/api/maven/"
+        url = "https://www.cursemaven.com"
     }
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.14.4-28.1.70'
-    implementation 'Obfuscate:obfuscate-0.3.3:1.14.4:deobf'
+    minecraft 'net.minecraftforge:forge:1.16.3-34.1.0'
+    compile fg.deobf('curse.maven:obfuscate:3067472')
 }
 
 jar {
